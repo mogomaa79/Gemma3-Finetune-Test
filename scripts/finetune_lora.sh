@@ -14,7 +14,7 @@ deepspeed src/training/train.py \
     --lora_alpha 64 \
     --lora_dropout 0.05 \
     --lora_namespan_exclude "['lm_head', 'embed_tokens']" \
-    --num_lora_modules 3 \
+    --num_lora_modules -1 \
     --deepspeed scripts/zero3.json \
     --model_id $MODEL_NAME \
     --data_path /path/to/your/training/data.json \

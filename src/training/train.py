@@ -9,6 +9,7 @@ from training.data import make_supervised_data_module
 from training.params import DataArguments, ModelArguments, TrainingArguments
 from training.train_utils import get_peft_state_maybe_zero_3, get_peft_state_non_lora_maybe_zero_3, safe_save_model_for_hf_trainer
 import pathlib
+from monkey_patch_forward import replace_gemma3_forward
 
 local_rank = None
 
@@ -61,6 +62,8 @@ def train():
         (ModelArguments, DataArguments, TrainingArguments))
     
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
+
+    replace_gemma3_forward()
 
     if training_args.lora_enable and not training_args.freeze_llm:
         raise ValueError("If `lora_enable` is True, `freeze_llm` must also be True.")

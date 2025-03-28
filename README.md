@@ -10,6 +10,10 @@ This repository contains a script for training [Gemma3](https://huggingface.co/g
 **[[Pixtral Finetune]](https://github.com/2U1/Pixtral-Finetune)**<br>
 **[[SmolVLM Finetune]](https://github.com/2U1/SmolVLM-Finetune)**
 
+## Update
+
+- [2025/03/28] 🔥Supports mixed-modality data.
+
 ## Table of Contents
 
 - [Fine-tuning Gemma3](#fine-tuning-gemma3)
