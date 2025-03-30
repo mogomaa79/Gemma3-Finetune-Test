@@ -5,6 +5,7 @@ This repository contains a script for training [Gemma3](https://huggingface.co/g
 ## Other projects
 
 **[[Phi3-Vision Finetuning]](https://github.com/2U1/Phi3-Vision-Finetune)**<br>
+**[[Llama3.2-Vision Finetuning]](https://github.com/2U1/Llama3.2-Vision-Ft)**<br>
 **[[Qwen2-VL Finetuning]](https://github.com/2U1/Qwen2-VL-Finetune)**<br>
 **[[Molmo Finetuning]](https://github.com/2U1/Molmo-Finetune)**<br>
 **[[Pixtral Finetune]](https://github.com/2U1/Pixtral-Finetune)**<br>
@@ -44,6 +45,8 @@ This repository contains a script for training [Gemma3](https://huggingface.co/g
 - LoRA, QLoRA
 - Full-finetuning
 - Multi-image and video training
+- Text-only data training
+- Mixed-modality training
 
 ## Docker
 
@@ -75,10 +78,44 @@ conda activate gemma
 
 ## Dataset Preparation
 
+**Note:** You could only use the text data to finetune the model.<br>
+
 The script requires a dataset formatted according to the LLaVA specification. The dataset should be a JSON file where each entry contains information about conversations and images. Ensure that the image paths in the dataset match the provided `--image_folder`.<br>
 
 **When using a multi-image dataset, the image tokens should all be `<image>`, and the image file names should have been in a list.**
 **Please see the example below and follow format your data.**
+
+<details>
+<summary>Example for text only data</summary>
+
+```json
+[
+  {
+    "id": "000000033471",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "Identify the odd one out: Twitter, Instagram, Telegram"
+      },
+      {
+        "from": "gpt",
+        "value": "Telegram"
+      },
+      {
+        "from": "human",
+        "value": "What makes Telegram different from Twitter and Instagram?"
+      },
+      {
+        "from": "gpt",
+        "value": "Telegram is a cloud-based instant messaging app that focuses on privacy and security. Unlike Twitter and Instagram which are mainly used for following news, celebrities, and sharing images, Telegram was created as a secure messaging app for private and group communication. Telegram also offers more advanced features than Twitter and Instagram, such as the ability to schedule messages, create bots, and send encrypted messages."
+      }
+    ]
+  }
+  ...
+]
+```
+
+</details>
 
 <details>
 <summary>Example for single image dataset</summary>
