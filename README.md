@@ -50,7 +50,8 @@ This repository contains a script for training [Gemma3](https://huggingface.co/g
 
 ## Docker
 
-To simplfy the setting process for training, you could use the provided pre-build environments.
+To simplfy the setting process for training, you could use the provided pre-build environments.<br>
+The settings are done in the conda env named `train`.
 
 ```
 docker pull john119/vlm:v1
