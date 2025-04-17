@@ -6,7 +6,6 @@ import torch
 import transformers
 import ujson as json
 from torch.utils.data import Dataset
-from qwen_vl_utils import process_vision_info
 from PIL import Image
 from decord import VideoReader, cpu
 import re

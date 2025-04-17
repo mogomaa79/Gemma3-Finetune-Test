@@ -311,6 +311,7 @@ You could see this [issue](https://github.com/andimarafioti/florence2-finetuning
 
 - [x] Support for multi-image & video data
 - [x] Handle mixed-modality data
+- [ ] Support DPO.
 
 ## Known Issues
 
