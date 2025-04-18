@@ -6,14 +6,15 @@ export PYTHONPATH=src:$PYTHONPATH
 
 # It is strongly recommended to train Gemma3 models with the `eager` attention implementation instead of `flash_attention_2`
 
-deepspeed src/training/train.py \
+deepspeed src/train/train.py \
+    --use_liger True \
     --deepspeed scripts/zero3.json \
     --model_id $MODEL_NAME \
     --data_path /path/to/your/training/data.json \
     --image_folder /path/to/your/image/folder \
     --disable_flash_attn2 True \
     --lora_enable False \
-    --tune_img_projector True \
+    --freeze_projector False \
     --freeze_vision_tower False \
     --freeze_llm False \
     --bf16 True \

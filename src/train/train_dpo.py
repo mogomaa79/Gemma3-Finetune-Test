@@ -4,12 +4,13 @@ import transformers
 from peft import LoraConfig, get_peft_model
 import ast
 from transformers import AutoProcessor, BitsAndBytesConfig, Gemma3ForConditionalGeneration
-from training.trainer import Gemma3Trainer
-from training.data import make_supervised_data_module
-from training.params import DataArguments, ModelArguments, TrainingArguments
-from training.train_utils import get_peft_state_maybe_zero_3, get_peft_state_non_lora_maybe_zero_3, safe_save_model_for_hf_trainer
+from train.dpo_trainer import GemmaDPOTrainer
+from train.data import make_dpo_data_module
+from train.params import DataArguments, ModelArguments, DPOArguments
+from train.train_utils import get_peft_state_maybe_zero_3, get_peft_state_non_lora_maybe_zero_3, safe_save_model_for_hf_trainer
 import pathlib
 from monkey_patch_forward import replace_gemma3_forward
+from liger_kernel.transformers.monkey_patch import apply_liger_kernel_to_gemma3_text
 
 local_rank = None
 
@@ -43,7 +44,7 @@ def configure_vision_tower(model, training_args, compute_dtype, device):
     vision_tower.to(dtype=compute_dtype, device=device)
 
     img_projection_params = model.multi_modal_projector.parameters()
-    set_requires_grad(img_projection_params, training_args.tune_img_projector)
+    set_requires_grad(img_projection_params, not training_args.freeze_projector)
 
     vision_model_params = vision_tower.parameters()
     set_requires_grad(vision_model_params, not training_args.freeze_vision_tower)
@@ -59,11 +60,15 @@ def train():
     global local_rank
 
     parser = transformers.HfArgumentParser(
-        (ModelArguments, DataArguments, TrainingArguments))
+        (ModelArguments, DataArguments, DPOArguments))
     
     model_args, data_args, training_args = parser.parse_args_into_dataclasses()
-
-    replace_gemma3_forward()
+    if training_args.use_liger:
+        apply_liger_kernel_to_gemma3_text(
+            rope=True, cross_entropy=False, fused_linear_cross_entropy=False, rms_norm=True, geglu=True
+        )
+    
+    replace_gemma3_forward(use_liger=training_args.use_liger)
 
     if training_args.lora_enable and not training_args.freeze_llm:
         raise ValueError("If `lora_enable` is True, `freeze_llm` must also be True.")
@@ -109,12 +114,27 @@ def train():
         attn_implementation="flash_attention_2" if not training_args.disable_flash_attn2 else "eager", 
         **bnb_model_from_pretrained_args
     )
+
+    ref_model = None
+
+    if not training_args.lora_enable:
+        ref_model = Gemma3ForConditionalGeneration.from_pretrained(
+            model_args.model_id,
+            torch_dtype=compute_dtype,
+            cache_dir=training_args.cache_dir,
+            attn_implementation="flash_attention_2" if not training_args.disable_flash_attn2 else "eager", 
+            **bnb_model_from_pretrained_args
+        )
     
     model_to_configure = model
     configure_llm(model_to_configure, training_args)
     configure_vision_tower(model_to_configure, training_args, compute_dtype, training_args.device)
 
     model.config.use_cache = False
+
+    if ref_model is not None:
+        ref_model.eval()
+        ref_model.cnfig.use_cache = False
 
     if training_args.bits in [4,8]:
         model.config.torch_dtype = (torch.float32 if training_args.fp16 else (torch.bfloat16 if training_args.bf16 else torch.float32))
@@ -164,14 +184,17 @@ def train():
                     if training_args.bf16 and module.weight.dtype == torch.float32:
                         module = module.to(torch.bfloat16)
 
-    data_module = make_supervised_data_module(processor=processor,
+    data_module = make_dpo_data_module(processor=processor,
                                               data_args=data_args)
 
-    trainer = Gemma3Trainer(
+    trainer = GemmaDPOTrainer(
         model=model,
-        processor=processor,
+        ref_model=ref_model,
+        train_dataset=data_module["train_dataset"],
+        eval_dataset=data_module["eval_dataset"],
+        data_collator=data_module["data_collator"],
+        processing_class=processor,
         args=training_args,
-        **data_module
     )
 
     if list(pathlib.Path(training_args.output_dir).glob("checkpoint-*")):

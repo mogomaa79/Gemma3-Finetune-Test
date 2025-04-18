@@ -2,35 +2,30 @@
 
 MODEL_NAME="google/gemma-3-4b-it"
 
-# It is strongly recommended to train Gemma3 models with the `eager` attention implementation instead of `flash_attention_2`
-
 export PYTHONPATH=src:$PYTHONPATH
 
+# It is strongly recommended to train Gemma3 models with the `eager` attention implementation instead of `flash_attention_2`
+
 deepspeed src/train/train.py \
-    --lora_enable True \
-    --vision_lora False \
-    --use_dora False \
-    --lora_rank 64 \
-    --lora_alpha 64 \
-    --lora_dropout 0.05 \
-    --lora_namespan_exclude "['lm_head', 'embed_tokens']" \
-    --num_lora_modules -1 \
+    --dpo_loss "sigmoid" \
+    --precompute_ref_log_probs False \
+    --beta 0.1 \
     --use_liger True \
     --deepspeed scripts/zero3.json \
     --model_id $MODEL_NAME \
     --data_path /path/to/your/training/data.json \
     --image_folder /path/to/your/image/folder \
     --disable_flash_attn2 True \
+    --lora_enable False \
     --freeze_projector False \
     --freeze_vision_tower False \
-    --freeze_llm True \
+    --freeze_llm False \
     --bf16 True \
-    --fp16 False \
-    --output_dir output/test_lora \
+    --output_dir output/test \
     --num_train_epochs 1 \
     --per_device_train_batch_size 1 \
     --gradient_accumulation_steps 1 \
-    --learning_rate 1e-4 \
+    --learning_rate 1e-5 \
     --projector_lr 1e-5 \
     --vision_lr 2e-6 \
     --weight_decay 0.1 \
@@ -42,6 +37,7 @@ deepspeed src/train/train.py \
     --gradient_checkpointing True \
     --report_to tensorboard \
     --lazy_preprocess True \
-    --dataloader_num_workers 4 \
-    --save_steps 500 \
+    --save_strategy "steps" \
+    --save_steps 200 \
     --save_total_limit 10 \
+    --dataloader_num_workers 4

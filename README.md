@@ -13,6 +13,7 @@ This repository contains a script for training [Gemma3](https://huggingface.co/g
 
 ## Update
 
+- [2025/04/18] 🔥Supports DPO training.
 - [2025/03/28] 🔥Supports mixed-modality data.
 
 ## Table of Contents
@@ -47,6 +48,8 @@ This repository contains a script for training [Gemma3](https://huggingface.co/g
 - Multi-image and video training
 - Text-only data training
 - Mixed-modality training
+- Supervised Fine-Tuning
+- DPO Fine-Tuning
 
 ## Docker
 
@@ -212,7 +215,35 @@ The script requires a dataset formatted according to the LLaVA specification. Th
 
 </details>
 
-## Training
+<details>
+<summary>Example for DPO dataet</summary>
+
+```json
+[
+  {
+    "id": "e4cd017f-3854-4019-9cc1-9dacacb5d424",
+    "image": "example_0_0.png",
+    "prompt": "<image>\nDescribe the key features of the image in great detail.",
+    "chosen": "The image features a modern, multi-colored train parked on a train track, occupying a significant portion of the scene. The train has a unique and striking design, with red, white, and blue colors, as well as yellow accents. It appears to be a high-speed train, indicating its advanced engineering and potential for fast travel.\n\nThe train is situated next to a platform, suggesting that it may be at a train station. The overall scene conveys a sense of transportation and modern technology, with the vibrant and sleek train as the main subject.",
+    "rejected": "The image features a modern, colorful train parked on a set of train tracks. The train has a striking design, with red, white, and blue colors as well as yellow accents. It appears to be a high-speed train, ready for departure.\n\nThe train spans a significant portion of the image, from the left to the right side. The train tracks can be seen clearly beneath the train, emphasizing its position on the railway line. The overall scene gives off an impression of a contemporary and efficient mode of transportation."
+  },
+  {
+    "id": "5e19e647-e5d3-4bcf-82e9-d262570743ae",
+    "image": "example_1_0.png",
+    "prompt": "<image>\nIs this bus in the USA?",
+    "chosen": "Yes, based on the image, it can be assumed that this bus is in the USA. The location of the bus cannot be accurately determined.",
+    "rejected": "No, it's not in the USA. The image does not provide specific information on where the bus is located. However, we can say that it's not in the United States."
+  }
+  ...
+]
+```
+
+</details>
+<br><br>
+
+Adding the new domain-specific data on top of the general data from open-source data will enhance downstream capabilities while retaining the foundational skills. Of course, you can also choose to fine-tune solely on the new data based on your requirements.
+
+## Supervised Fine Tuning
 
 **Note:** Deepspeed zero2 is faster than zero3, however it consumes more memory. Also, most of the time zero2 is more stable than zero3.<br><br>
 **Tip:** You could use `adamw_bnb_8bit` for optimizer to save memory.
@@ -254,7 +285,7 @@ bash scripts/finetune_lora_vision.sh
 - `--per_device_train_batch_size` (int): Training batch size per GPU per forwarding step.
 - `--gradient_accumulation_steps` (int): Gradient accumulation steps (default: 4).
 - `--freeze_vision_tower` (bool): Option to freeze vision_model (default: False).
-- `--tune_merger` (bool): Option to tune projector (default: True).
+- `--freeze_projector` (bool): Option to freeze projector (default: False).
 - `--num_lora_modules` (int): Number of target modules to add LoRA (-1 means all layers).
 - `--vision_lr` (float): Learning rate for vision_model.
 - `--projector_lr` (float): Learning rate for projector.
@@ -298,6 +329,15 @@ bash scripts/merge_lora.sh
 
 **Note:** Remember to replace the paths in `finetune.sh` or `finetune_lora.sh` with your specific paths. (Also in `merge_lora.sh` when using LoRA.)
 
+## DPO Finetuning
+
+You can train the model using Direct Preference Optimization (DPO).<br>
+The process is quite similar to Supervised Fine-Tuning (SFT), and you can also apply LoRA during DPO training just like in SFT.
+
+```bash
+bash scripts/finetune_dpo.sh
+```
+
 #### Issue for libcudnn error
 
 ```
@@ -311,7 +351,7 @@ You could see this [issue](https://github.com/andimarafioti/florence2-finetuning
 
 - [x] Support for multi-image & video data
 - [x] Handle mixed-modality data
-- [ ] Support DPO.
+- [x] Support DPO.
 
 ## Known Issues
 

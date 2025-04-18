@@ -6,12 +6,13 @@ MODEL_NAME="google/gemma-3-4b-it"
 
 export PYTHONPATH=src:$PYTHONPATH
 
-deepspeed src/training/train.py \
+deepspeed src/train/train.py \
+    --use_liger True \
     --deepspeed scripts/zero3.json \
     --model_id $MODEL_NAME \
     --data_path /path/to/your/video_data.json \
     --image_folder /path/to/your/image/folder \
-    --tune_img_projector True \
+    --freeze_projector False \
     --freeze_vision_tower False \
     --freeze_llm False \
     --bf16 True \

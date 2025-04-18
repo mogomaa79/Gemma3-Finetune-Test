@@ -9,7 +9,7 @@ MODEL_NAME="google/gemma-3-4b-it"
 
 export PYTHONPATH=src:$PYTHONPATH
 
-deepspeed src/training/train.py \
+deepspeed src/train/train.py \
     --lora_enable True \
     --vision_lora True \
     --use_dora False \
@@ -18,12 +18,13 @@ deepspeed src/training/train.py \
     --lora_alpha 64 \
     --lora_dropout 0.05 \
     --num_lora_modules -1 \
+    --use_liger True \
     --deepspeed scripts/zero2.json \
     --model_id $MODEL_NAME \
     --data_path /path/to/your/training/data.json \
     --image_folder /path/to/your/image/folder \
     --disable_flash_attn2 True \
-    --tune_img_projector True \
+    --freeze_projector False \
     --freeze_vision_tower True \
     --freeze_llm True \
     --bf16 True \
