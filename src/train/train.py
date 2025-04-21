@@ -150,6 +150,21 @@ def train():
         rank0_print("Adding LoRA to the model...")
         model = get_peft_model(model, peft_config)
 
+        # Peft maodel makes vision tower and projector freezed again.
+        # Configuring fuction could be called here, but sometimes it does not work properly.
+        # So I just made it this way.
+        # Need to be fixed in the future.
+
+        if not training_args.freeze_vision_tower:
+            for name, param in model.named_parameters():
+                if "vision_tower" in name:
+                    param.requires_grad = True
+
+        if not training_args.freeze_merger:
+            for name, param in model.named_parameters():
+                if "multi_modal_projector" in name:
+                    param.requires_grad = True
+
     processor = AutoProcessor.from_pretrained(model_args.model_id)
         
     model.config.vision_lr = training_args.vision_lr
