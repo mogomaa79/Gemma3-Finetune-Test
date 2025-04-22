@@ -28,11 +28,12 @@ This repository contains a script for training [Gemma3](https://huggingface.co/g
     - [Environments](#environments)
     - [Using `environment.yaml`](#using-environmentyaml)
   - [Dataset Preparation](#dataset-preparation)
-  - [Training](#training)
+  - [Supervised Fine Tuning](#supervised-fine-tuning)
     - [Full Finetuning](#full-finetuning)
     - [Finetune with LoRA](#finetune-with-lora)
     - [Train with video dataset](#train-with-video-dataset)
       - [Merge LoRA Weights](#merge-lora-weights)
+  - [DPO Finetuning](#dpo-finetuning)
       - [Issue for libcudnn error](#issue-for-libcudnn-error)
   - [TODO](#todo)
   - [Known Issues](#known-issues)
@@ -59,7 +60,7 @@ You could find more information about the image [here](https://hub.docker.com/re
 
 ```
 docker pull john119/vlm
-docker run --gpus all -it -v /host/path:/docker/path --name vlm --ipc=host john119/vlm:v1 /bin/bash
+docker run --gpus all -it -v /host/path:/docker/path --name vlm --ipc=host john119/vlm /bin/bash
 ```
 
 ## Installation
