@@ -6,7 +6,7 @@ MODEL_NAME="google/gemma-3-4b-it"
 
 export PYTHONPATH=src:$PYTHONPATH
 
-deepspeed src/train/train.py \
+deepspeed src/train/train_sft.py \
     --lora_enable True \
     --vision_lora False \
     --use_dora False \

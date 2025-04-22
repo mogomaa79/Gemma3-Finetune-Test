@@ -6,7 +6,7 @@ export PYTHONPATH=src:$PYTHONPATH
 
 # It is strongly recommended to train Gemma3 models with the `eager` attention implementation instead of `flash_attention_2`
 
-deepspeed src/train/train.py \
+deepspeed src/train/train_sft.py \
     --use_liger True \
     --deepspeed scripts/zero3.json \
     --model_id $MODEL_NAME \
