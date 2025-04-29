@@ -367,8 +367,8 @@ class DataCollatorForDPODataset(object):
         prompt_input_ids = pad_sequence(
             batch_input_ids, padding_side='right', padding_value=self.pad_token_id
         )
-        chosen = pad_sequence(batch_chosen_ids, padding_side='right', padding_value=IGNORE_INDEX)
-        rejected = pad_sequence(batch_rejected_ids, padding_side='right', padding_value=IGNORE_INDEX)
+        chosen = pad_sequence(batch_chosen_ids, padding_side='right', padding_value=self.pad_token_id)
+        rejected = pad_sequence(batch_rejected_ids, padding_side='right', padding_value=self.pad_token_id)
 
         prompt_attention_mask = prompt_input_ids != self.pad_token_id
         chosen_attention_mask = chosen != self.pad_token_id
