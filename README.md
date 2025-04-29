@@ -34,7 +34,7 @@ This repository contains a script for training [Gemma3](https://huggingface.co/g
     - [Train with video dataset](#train-with-video-dataset)
       - [Merge LoRA Weights](#merge-lora-weights)
   - [DPO Finetuning](#dpo-finetuning)
-      - [Issue for libcudnn error](#issue-for-libcudnn-error)
+    - [Issue for libcudnn error](#issue-for-libcudnn-error)
   - [TODO](#todo)
   - [Known Issues](#known-issues)
   - [License](#license)
@@ -339,7 +339,7 @@ The process is quite similar to Supervised Fine-Tuning (SFT), and you can also a
 bash scripts/finetune_dpo.sh
 ```
 
-#### Issue for libcudnn error
+## Issue for libcudnn error
 
 ```
 Could not load library libcudnn_cnn_train.so.8. Error: /usr/local/cuda-12.1/lib/libcudnn_cnn_train.so.8: undefined symbol: _ZN5cudnn3cnn34layerNormFwd_execute_internal_implERKNS_7backend11VariantPackEP11CUstream_stRNS0_18LayerNormFwdParamsERKNS1_20NormForwardOperationEmb, version libcudnn_cnn_infer.so.8
