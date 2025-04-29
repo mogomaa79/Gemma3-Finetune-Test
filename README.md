@@ -27,6 +27,7 @@ This repository contains a script for training [Gemma3](https://huggingface.co/g
   - [Installation](#installation)
     - [Environments](#environments)
     - [Using `environment.yaml`](#using-environmentyaml)
+    - [Using `requirements.txt`](#using-requirementstxt)
   - [Dataset Preparation](#dataset-preparation)
   - [Supervised Fine Tuning](#supervised-fine-tuning)
     - [Full Finetuning](#full-finetuning)
@@ -34,7 +35,7 @@ This repository contains a script for training [Gemma3](https://huggingface.co/g
     - [Train with video dataset](#train-with-video-dataset)
       - [Merge LoRA Weights](#merge-lora-weights)
   - [DPO Finetuning](#dpo-finetuning)
-    - [Issue for libcudnn error](#issue-for-libcudnn-error)
+  - [Issue for libcudnn error](#issue-for-libcudnn-error)
   - [TODO](#todo)
   - [Known Issues](#known-issues)
   - [License](#license)
@@ -69,7 +70,7 @@ docker run --gpus all -it -v /host/path:/docker/path --name vlm --ipc=host john1
 
 - Ubuntu 22.04
 - Nvidia-Driver 550.120
-- Cuda version 12.4
+- Cuda version 12.6
 
 Install the required packages using `environment.yml`.
 
@@ -77,7 +78,13 @@ Install the required packages using `environment.yml`.
 
 ```bash
 conda env create -f environment.yaml
-conda activate gemma
+conda activate train
+```
+
+### Using `requirements.txt`
+
+```bash
+pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cu126
 ```
 
 **Note:** It is strongly recommended to train Gemma3 models with the `eager` attention implementation instead of `flash_attention_2`
