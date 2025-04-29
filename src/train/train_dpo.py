@@ -134,7 +134,7 @@ def train():
 
     if ref_model is not None:
         ref_model.eval()
-        ref_model.cnfig.use_cache = False
+        ref_model.config.use_cache = False
 
     if training_args.bits in [4,8]:
         model.config.torch_dtype = (torch.float32 if training_args.fp16 else (torch.bfloat16 if training_args.bf16 else torch.float32))
