@@ -189,7 +189,7 @@ def train():
 
     trainer = Gemma3Trainer(
         model=model,
-        processor=processor,
+        processing_class=processor,
         args=training_args,
         **data_module
     )
