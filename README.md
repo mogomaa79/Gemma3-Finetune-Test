@@ -84,7 +84,7 @@ conda activate train
 ### Using `requirements.txt`
 
 ```bash
-pip install -r requirements.txt --index-url https://download.pytorch.org/whl/cu126
+pip install -r requirements.txt -f https://download.pytorch.org/whl/cu124
 ```
 
 **Note:** It is strongly recommended to train Gemma3 models with the `eager` attention implementation instead of `flash_attention_2`
