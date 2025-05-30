@@ -4,9 +4,9 @@ import transformers
 from peft import LoraConfig, get_peft_model
 import ast
 from transformers import AutoProcessor, BitsAndBytesConfig, Gemma3ForConditionalGeneration
-from train.dpo_trainer import GemmaDPOTrainer
-from train.data import make_dpo_data_module
-from train.params import DataArguments, ModelArguments, DPOArguments
+from src.trainer import GemmaDPOTrainer
+from src.dataset import make_dpo_data_module
+from src.params import DataArguments, ModelArguments, DPOArguments
 from train.train_utils import get_peft_state_maybe_zero_3, get_peft_state_non_lora_maybe_zero_3, safe_save_model_for_hf_trainer
 import pathlib
 from monkey_patch_forward import replace_gemma3_forward

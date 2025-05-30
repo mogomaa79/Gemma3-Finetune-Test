@@ -40,10 +40,10 @@ def maybe_zero_3(param, ignore_status=False, name=None):
         param = param.detach().cpu().clone()
     return param
 
-class Gemma3Trainer(Trainer):
+class GemmaSFTTrainer(Trainer):
 
     def __init__(self, *args, **kwargs):
-        super(Gemma3Trainer, self).__init__(*args, **kwargs)
+        super(GemmaSFTTrainer, self).__init__(*args, **kwargs)
 
     def create_optimizer(self):
         """
@@ -217,7 +217,7 @@ class Gemma3Trainer(Trainer):
             if self.args.push_to_hub:
                 self._push_from_checkpoint(output_dir)
         else:
-            super(Gemma3Trainer, self)._save_checkpoint(model, trial)
+            super(GemmaSFTTrainer, self)._save_checkpoint(model, trial)
 
     # def training_step(self, model, inputs):
     #     for name, param in model.named_parameters():

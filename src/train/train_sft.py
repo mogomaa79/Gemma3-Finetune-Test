@@ -4,9 +4,9 @@ import transformers
 from peft import LoraConfig, get_peft_model
 import ast
 from transformers import AutoProcessor, BitsAndBytesConfig, Gemma3ForConditionalGeneration
-from train.trainer import Gemma3Trainer
-from train.data import make_supervised_data_module
-from train.params import DataArguments, ModelArguments, TrainingArguments
+from src.trainer import GemmaSFTTrainer
+from src.dataset import make_supervised_data_module
+from src.params import DataArguments, ModelArguments, TrainingArguments
 from train.train_utils import get_peft_state_maybe_zero_3, get_peft_state_non_lora_maybe_zero_3, safe_save_model_for_hf_trainer
 import pathlib
 from monkey_patch_forward import replace_gemma3_forward
@@ -187,7 +187,7 @@ def train():
     data_module = make_supervised_data_module(processor=processor,
                                               data_args=data_args)
 
-    trainer = Gemma3Trainer(
+    trainer = GemmaSFTTrainer(
         model=model,
         processing_class=processor,
         args=training_args,
