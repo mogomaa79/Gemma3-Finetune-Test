@@ -13,6 +13,7 @@ This repository contains a script for training [Gemma3](https://huggingface.co/g
 
 ## Update
 
+- [2025/06/02] 🔥Supports GRPO training.
 - [2025/04/18] 🔥Supports DPO training.
 - [2025/03/28] 🔥Supports mixed-modality data.
 
@@ -247,6 +248,32 @@ The script requires a dataset formatted according to the LLaVA specification. Th
 ```
 
 </details>
+
+<details>
+<summary>Example for GRPO dataset</summary>
+
+```json
+[
+  {
+    "id": "06bc8a17-bb1c-4007-8c08-92c41e2628b2",
+    "image": "image_2.jpg",
+    "conversations": [
+      {
+        "from": "human",
+        "value": "Based on the image, which geometric method is used to determine the bearing angle, and why is it the most appropriate choice?"
+      },
+      {
+        "from": "gpt",
+        "value": "<think>Let's analyze the image step-by-step. The image shows a right-angled triangle with points B, C, and A. The angle at point B is a right angle, indicating that trigonometric functions can be applied. To find the bearing angle, we need to relate the sides of the triangle. The tangent function is suitable here because it relates the opposite side (BC) to the adjacent side (AB) in a right-angled triangle. By using the tangent function, we can calculate the angle at point A, which is the bearing angle. Therefore, the most appropriate geometric method is the use of trigonometric functions.</think>\n\n<answer>A</answer>"
+      }
+    ]
+  }
+  ...
+]
+```
+
+</details>
+
 <br><br>
 
 Adding the new domain-specific data on top of the general data from open-source data will enhance downstream capabilities while retaining the foundational skills. Of course, you can also choose to fine-tune solely on the new data based on your requirements.
@@ -346,6 +373,56 @@ The process is quite similar to Supervised Fine-Tuning (SFT), and you can also a
 bash scripts/finetune_dpo.sh
 ```
 
+Most of the training arugments are same as SFT, but few other arguments are added for DPO training.
+
+<details>
+<summary>Training arguments</summary>
+
+- `--dpo_loss` (str): Loss type for dpo. (default: 'sigmoid')
+- `--precompute_ref_log_probs` (bool): Wheter to precompute the reference log probs (default: False)
+- `--beta` (float): The beta value for DPO (default: 0.1)
+
+</details>
+
+## GRPO Finetuning
+
+You can traing the model using Group Relative Policy Optimization (GRPO) <br>
+The process is quite similar to Supervised Fine-Tuning (SFT), and you can also apply LoRA during GRPO training just like in SFT.<br><br>
+
+For the video data, you should preprocess the video and save the frames into the local directory. Then use customize your data as a multi-image dataset.<br>
+<br>
+
+### Prerequisites
+
+| What                      | Where                       | Notes                                                                                       |
+| ------------------------- | --------------------------- | ------------------------------------------------------------------------------------------- |
+| **Reward functions**      | `src/train/reward_funcs.py` | Add any function that ends with `_reward`. The training script picks them up automatically. |
+| **Custom system prompts** | `src/constants.py`          | Append your own prompt strings here.                                                        |
+
+You could start training using this script.
+
+```bash
+bash scripts/finetune_grpo.sh
+```
+
+Most of the training arugments are same as SFT, but few other arguments are added for GRPO training.
+
+<details>
+<summary>Training arguments</summary>
+
+- `--temperature` (float): Generation config (default: 0.9)
+- `--top_p` (float): Generation config (default: 1.0)
+- `--top_k` (int): Generation config (default: 50)
+- `--min_p` (float): Generation config (default: None)
+- `--repetition_penalty` (float): Generation config (default: 1.0)
+- `--max_completion_length` (int): Max length for the completion (default: 256)
+- `--max_prompt_length` (int): Max length for the prompt (default: 512)
+- `--beta` (float): KL Coefficient. (default: 0.04)
+
+</details>
+
+**Note:** **Liger GRPO loss** and **vLLM back-end** are not yet supported. Both will be added soon.
+
 ## Issue for libcudnn error
 
 ```
@@ -360,6 +437,8 @@ You could see this [issue](https://github.com/andimarafioti/florence2-finetuning
 - [x] Support for multi-image & video data
 - [x] Handle mixed-modality data
 - [x] Support DPO.
+- [ ] Support mixed-modality data for GRPO
+- [ ] Fix GRPO liger loss to work
 
 ## Known Issues
 

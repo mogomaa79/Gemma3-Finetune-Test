@@ -1,6 +1,11 @@
 from PIL import Image
 from decord import VideoReader, cpu
 import re
+from PIL import Image
+import requests
+from typing import List, Dict, Any
+from io import BytesIO
+import os
 
 from src.constants import (
     LLAVA_VIDEO_TOKEN,
@@ -98,3 +103,57 @@ def get_image_info(images, processor):
     pixel_values = vision_infos["pixel_values"]
 
     return pixel_values
+
+def _load_image_from_string(src: str) -> Image.Image:
+    """
+    Helper: load an image from a local path or a URL and return a PIL.Image in RGB.
+    """
+    if src.startswith(("http://", "https://")):
+        # Remote image ─ download it to memory first
+        resp = requests.get(src, timeout=15)
+        resp.raise_for_status()                       # fail loudly on bad status
+        return Image.open(BytesIO(resp.content)).convert("RGB")
+    else:
+        # Local file path
+        if not os.path.exists(src):
+            raise FileNotFoundError(f"Image file not found: {src}")
+        return Image.open(src).convert("RGB")
+
+def process_vision_info(messages: List[Dict[str, Any]]) -> List[Image.Image]:
+    """
+    Extract all images from a list of chat messages, return them as RGB PIL.Images.
+    Works with:
+        • in-memory PIL.Image objects
+        • local file paths (str)
+        • HTTP/HTTPS URLs (str)
+    """
+    image_inputs: List[Image.Image] = []
+
+    for msg in messages:                               # each chat turn
+        content = msg.get("content", [])
+        if not isinstance(content, list):
+            content = [content]
+
+        for element in content:                        # each chunk inside 'content'
+            if isinstance(element, dict) and (
+                "image" in element or element.get("type") == "image"
+            ):
+                img_obj = element["image"] if "image" in element else element
+
+                # Case 1: already a PIL.Image
+                if isinstance(img_obj, Image.Image):
+                    image_inputs.append(img_obj.convert("RGB"))
+
+                # Case 2: string → local path or URL
+                elif isinstance(img_obj, str):
+                    try:
+                        image_inputs.append(_load_image_from_string(img_obj))
+                    except Exception as e:
+                        # You can log or skip problematic images here
+                        print(f"[process_vision_info] Skipped image '{img_obj}': {e}")
+
+                # Case 3: unsupported type → ignore or raise
+                else:
+                    print(f"[process_vision_info] Unsupported image type: {type(img_obj)}")
+
+    return image_inputs

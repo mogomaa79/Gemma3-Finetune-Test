@@ -9,3 +9,5 @@ VISION_START_TOKEN = "<start_of_image>"
 VISION_END_TOKEN = "<end_of_image>"
 
 SYSTEM_MESSAGE=""
+
+MULTIMODAL_KEYWORDS = ["pixel_values", "token_type_ids"]
