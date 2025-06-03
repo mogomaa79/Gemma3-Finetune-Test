@@ -36,6 +36,8 @@ This repository contains a script for training [Gemma3](https://huggingface.co/g
     - [Train with video dataset](#train-with-video-dataset)
       - [Merge LoRA Weights](#merge-lora-weights)
   - [DPO Finetuning](#dpo-finetuning)
+  - [GRPO Finetuning](#grpo-finetuning)
+    - [Prerequisites](#prerequisites)
   - [Issue for libcudnn error](#issue-for-libcudnn-error)
   - [TODO](#todo)
   - [Known Issues](#known-issues)
@@ -53,6 +55,7 @@ This repository contains a script for training [Gemma3](https://huggingface.co/g
 - Mixed-modality training
 - Supervised Fine-Tuning
 - DPO Fine-Tuning
+- GRPO Fine-Tuning
 
 ## Docker
 
