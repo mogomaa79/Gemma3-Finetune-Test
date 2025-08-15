@@ -4,6 +4,11 @@ from peft import LoraConfig
 import ast
 import pathlib
 from transformers import AutoProcessor, BitsAndBytesConfig, HfArgumentParser, Gemma3ForConditionalGeneration
+try:
+    from transformers import is_deepspeed_zero3_enabled
+except ImportError:
+    def is_deepspeed_zero3_enabled():
+        return False
 from src.trainer import GemmaGRPOTrainer
 from src.dataset import make_grpo_data_module
 from src.params import DataArguments, ModelArguments, GRPOArguments
@@ -92,8 +97,13 @@ def train():
 
     bnb_model_from_pretrained_args = {}
     if training_args.bits in [4,8]:
+        # Don't use device_map with DeepSpeed ZeRO-3 as they are incompatible
+        if not is_deepspeed_zero3_enabled():
+            bnb_model_from_pretrained_args.update(dict(
+                device_map={"":training_args.device},
+            ))
+        
         bnb_model_from_pretrained_args.update(dict(
-            device_map={"":training_args.device},
             quantization_config = BitsAndBytesConfig(
                 load_in_4bit=training_args.bits==4,
                 load_in_8bit=training_args.bits==8,
