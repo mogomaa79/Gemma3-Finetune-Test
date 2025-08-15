@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MODEL_NAME="google/gemma-3-270m"
+MODEL_NAME="google/gemma-3-4b-it"
 
 export PYTHONPATH=src:$PYTHONPATH
 
