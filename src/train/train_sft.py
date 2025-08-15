@@ -3,7 +3,7 @@ import torch
 import transformers
 from peft import LoraConfig, get_peft_model
 import ast
-from transformers import AutoProcessor, BitsAndBytesConfig, Gemma3ForConditionalGeneration
+from transformers import AutoProcessor, AutoTokenizer, BitsAndBytesConfig, Gemma3ForConditionalGeneration
 from src.trainer import GemmaSFTTrainer
 from src.dataset import make_supervised_data_module
 from src.params import DataArguments, ModelArguments, TrainingArguments
@@ -40,20 +40,29 @@ def set_requires_grad(parameters, requires_grad):
         p.requires_grad = requires_grad
 
 def configure_vision_tower(model, training_args, compute_dtype, device):
-    vision_tower = model.vision_tower
-    vision_tower.to(dtype=compute_dtype, device=device)
+    # Skip vision tower configuration for text-only models
+    if hasattr(model, 'vision_tower') and model.vision_tower is not None:
+        vision_tower = model.vision_tower
+        vision_tower.to(dtype=compute_dtype, device=device)
 
-    img_projection_params = model.multi_modal_projector.parameters()
-    set_requires_grad(img_projection_params, not training_args.freeze_projector)
+        img_projection_params = model.multi_modal_projector.parameters()
+        set_requires_grad(img_projection_params, not training_args.freeze_projector)
 
-    vision_model_params = vision_tower.parameters()
-    set_requires_grad(vision_model_params, not training_args.freeze_vision_tower)
+        vision_model_params = vision_tower.parameters()
+        set_requires_grad(vision_model_params, not training_args.freeze_vision_tower)
 
-    if training_args.bits in [4, 8]:
-        model.model.vision_embed_tokens.img_processor.to(dtype=compute_dtype, device=device)
+        if training_args.bits in [4, 8]:
+            model.model.vision_embed_tokens.img_processor.to(dtype=compute_dtype, device=device)
+    else:
+        rank0_print("Text-only model detected, skipping vision tower configuration")
 
 def configure_llm(model, training_args):
-    llm_params = model.language_model.parameters()
+    # For text-only models, configure the main model parameters
+    if hasattr(model, 'language_model'):
+        llm_params = model.language_model.parameters()
+    else:
+        # For standard Gemma models, use the main model parameters
+        llm_params = model.parameters()
     set_requires_grad(llm_params, not training_args.freeze_llm)
 
 def train():
@@ -107,11 +116,13 @@ def train():
             )
         ))
     
+    # For text-only models, add ignore_mismatched_sizes=True to handle architecture differences
     model = Gemma3ForConditionalGeneration.from_pretrained(
         model_args.model_id,
         torch_dtype=compute_dtype,
         cache_dir=training_args.cache_dir,
-        attn_implementation="flash_attention_2" if not training_args.disable_flash_attn2 else "eager", 
+        attn_implementation="flash_attention_2" if not training_args.disable_flash_attn2 else "eager",
+        ignore_mismatched_sizes=True,  # Important for text-only models
         **bnb_model_from_pretrained_args
     )
     
@@ -165,10 +176,19 @@ def train():
                 if "multi_modal_projector" in name:
                     param.requires_grad = True
 
-    processor = AutoProcessor.from_pretrained(model_args.model_id)
+    # Use tokenizer for text-only models instead of processor
+    try:
+        processor = AutoProcessor.from_pretrained(model_args.model_id)
+        rank0_print("Using AutoProcessor (multimodal model)")
+    except:
+        processor = AutoTokenizer.from_pretrained(model_args.model_id)
+        rank0_print("Using AutoTokenizer (text-only model)")
         
-    model.config.vision_lr = training_args.vision_lr
-    model.config.projector_lr = training_args.projector_lr
+    # Only set vision config if model supports it
+    if hasattr(model.config, 'vision_lr'):
+        model.config.vision_lr = training_args.vision_lr
+    if hasattr(model.config, 'projector_lr'):
+        model.config.projector_lr = training_args.projector_lr
 
     if training_args.bits in [4, 8]:
         from peft.tuners.lora import LoraLayer

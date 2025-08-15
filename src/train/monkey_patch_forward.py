@@ -46,8 +46,8 @@ def gemma3_mixed_modality_forward_with_flce(
     is_training = token_type_ids is not None and labels is not None
 
     # Replace image id woth PAD if the image token if OOV, to avoid index-errors
-    if input_ids is not None and self.config.image_token_index >= self.vocab_size:
-        special_image_mask = input_ids == self.config.image_token_index
+    if input_ids is not None and getattr(self.config, 'image_token_index', None) is not None and getattr(self.config, 'image_token_index', None) >= self.vocab_size:
+        special_image_mask = input_ids == getattr(self.config, 'image_token_index', None)
         llm_input_ids = input_ids.clone()
         llm_input_ids[special_image_mask] = 0
     else:
@@ -74,10 +74,10 @@ def gemma3_mixed_modality_forward_with_flce(
 
         if input_ids is None:
             special_image_mask = inputs_embeds == self.get_input_embeddings()(
-                torch.tensor(self.config.image_token_index, dtype=torch.long, device=inputs_embeds.device)
+                torch.tensor(getattr(self.config, 'image_token_index', None), dtype=torch.long, device=inputs_embeds.device)
             )
         else:
-            special_image_mask = (input_ids == self.config.image_token_index).unsqueeze(-1)
+            special_image_mask = (input_ids == getattr(self.config, 'image_token_index', None)).unsqueeze(-1)
             special_image_mask = special_image_mask.expand_as(inputs_embeds).to(inputs_embeds.device)
 
         if not is_torchdynamo_compiling() and inputs_embeds[special_image_mask].numel() != image_features.numel():
@@ -209,8 +209,8 @@ def gemma3_mixed_modality_forward(
     is_training = token_type_ids is not None and labels is not None
 
     # Replace image id woth PAD if the image token if OOV, to avoid index-errors
-    if input_ids is not None and self.config.image_token_index >= self.vocab_size:
-        special_image_mask = input_ids == self.config.image_token_index
+    if input_ids is not None and getattr(self.config, 'image_token_index', None) is not None and getattr(self.config, 'image_token_index', None) >= self.vocab_size:
+        special_image_mask = input_ids == getattr(self.config, 'image_token_index', None)
         llm_input_ids = input_ids.clone()
         llm_input_ids[special_image_mask] = 0
     else:
@@ -237,10 +237,10 @@ def gemma3_mixed_modality_forward(
 
         if input_ids is None:
             special_image_mask = inputs_embeds == self.get_input_embeddings()(
-                torch.tensor(self.config.image_token_index, dtype=torch.long, device=inputs_embeds.device)
+                torch.tensor(getattr(self.config, 'image_token_index', None), dtype=torch.long, device=inputs_embeds.device)
             )
         else:
-            special_image_mask = (input_ids == self.config.image_token_index).unsqueeze(-1)
+            special_image_mask = (input_ids == getattr(self.config, 'image_token_index', None)).unsqueeze(-1)
             special_image_mask = special_image_mask.expand_as(inputs_embeds).to(inputs_embeds.device)
 
         if not is_torchdynamo_compiling() and inputs_embeds[special_image_mask].numel() != image_features.numel():

@@ -60,9 +60,10 @@ class GemmaSFTTrainer(Trainer):
             decay_parameters = get_parameter_names(opt_model, ALL_LAYERNORM_LAYERS)
             decay_parameters = [name for name in decay_parameters if "bias" not in name]
             lr_mapper = {}
-            if self.args.projector_lr is not None:
+            # Only add vision-specific learning rates if the model has vision components
+            if hasattr(self.args, 'projector_lr') and self.args.projector_lr is not None:
                 lr_mapper["multi_modal_projector"] = self.args.projector_lr
-            if self.args.vision_lr is not None:
+            if hasattr(self.args, 'vision_lr') and self.args.vision_lr is not None:
                 lr_mapper["vision_tower"] = self.args.vision_lr
             if len(lr_mapper) > 0:
                 special_lr_parameters = [name for name, _ in opt_model.named_parameters() if any(module_keyword in name for module_keyword in lr_mapper)]
