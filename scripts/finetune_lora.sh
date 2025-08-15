@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MODEL_NAME="google/gemma-3-4b-it"
+MODEL_NAME="google/gemma-3-270m-it"
 
 # It is strongly recommended to train Gemma3 models with the `eager` attention implementation instead of `flash_attention_2`
 

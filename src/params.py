@@ -8,7 +8,7 @@ from trl import GRPOConfig as GRPOConfigTRL
 
 @dataclass
 class ModelArguments:
-    model_id: Optional[str] = field(default="google/gemma-3-4b-it")
+    model_id: Optional[str] = field(default="google/gemma-3-270m-it")
 
 
 @dataclass

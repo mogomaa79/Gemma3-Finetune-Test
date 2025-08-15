@@ -1,6 +1,6 @@
 # Fine-tuning Gemma3
 
-This repository contains a script for training [Gemma3](https://huggingface.co/google/gemma-3-4b-it) with only using HuggingFace.
+This repository contains a script for training [Gemma3](https://huggingface.co/google/gemma-3-270m-it) with only using HuggingFace.
 
 ## Other projects
 
@@ -470,4 +470,4 @@ If you find this repository useful in your project, please consider giving a :st
 This project is based on
 
 - [LLaVA-NeXT](https://github.com/LLaVA-VL/LLaVA-NeXT): An amazing open-source project of LMM.
-- [Gemma3](https://huggingface.co/google/gemma-3-4b-it): Awesome pretrained MLLM by Google.
+- [Gemma3](https://huggingface.co/google/gemma-3-270m-it): Awesome pretrained MLLM by Google.
