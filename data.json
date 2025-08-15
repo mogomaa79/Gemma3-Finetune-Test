@@ -1,5 +1,5 @@
 [
-  {
+    {
     "id": "000000000001",
     "conversations": [
       {
@@ -1275,28 +1275,28 @@
   },
   {
     "id": "000000000099",
-    "conversations": [
-      {
-        "from": "human",
+      "conversations": [
+        {
+          "from": "human",
         "value": "Translate this German text to English: Das Konzert war fantastisch."
-      },
-      {
-        "from": "gpt",
+        },
+        {
+          "from": "gpt",
         "value": "The concert was fantastic."
       }
     ]
-  },
+        },
   {
     "id": "000000000100",
     "conversations": [
-      {
-        "from": "human",
+        {
+          "from": "human",
         "value": "Translate this German text to English: Vielen Dank für Ihre Hilfe."
-      },
-      {
-        "from": "gpt",
+        },
+        {
+          "from": "gpt",
         "value": "Thank you very much for your help."
-      }
-    ]
-  }
-]
+        }
+      ]
+    }
+  ]

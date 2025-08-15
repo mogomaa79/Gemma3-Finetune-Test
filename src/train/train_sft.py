@@ -40,20 +40,29 @@ def set_requires_grad(parameters, requires_grad):
         p.requires_grad = requires_grad
 
 def configure_vision_tower(model, training_args, compute_dtype, device):
-    vision_tower = model.vision_tower
-    vision_tower.to(dtype=compute_dtype, device=device)
+    # Skip vision configuration for text-only models
+    if hasattr(model, 'vision_tower') and model.vision_tower is not None:
+        vision_tower = model.vision_tower
+        vision_tower.to(dtype=compute_dtype, device=device)
 
-    img_projection_params = model.multi_modal_projector.parameters()
-    set_requires_grad(img_projection_params, not training_args.freeze_projector)
+        img_projection_params = model.multi_modal_projector.parameters()
+        set_requires_grad(img_projection_params, not training_args.freeze_projector)
 
-    vision_model_params = vision_tower.parameters()
-    set_requires_grad(vision_model_params, not training_args.freeze_vision_tower)
+        vision_model_params = vision_tower.parameters()
+        set_requires_grad(vision_model_params, not training_args.freeze_vision_tower)
 
-    if training_args.bits in [4, 8]:
-        model.model.vision_embed_tokens.img_processor.to(dtype=compute_dtype, device=device)
+        if training_args.bits in [4, 8]:
+            model.model.vision_embed_tokens.img_processor.to(dtype=compute_dtype, device=device)
+    else:
+        rank0_print("Text-only model detected, skipping vision tower configuration")
 
 def configure_llm(model, training_args):
-    llm_params = model.language_model.parameters()
+    # Handle different model architectures
+    if hasattr(model, 'language_model'):
+        llm_params = model.language_model.parameters()
+    else:
+        # For text-only models, use the main model parameters
+        llm_params = model.parameters()
     set_requires_grad(llm_params, not training_args.freeze_llm)
 
 def train():
@@ -111,7 +120,8 @@ def train():
         model_args.model_id,
         torch_dtype=compute_dtype,
         cache_dir=training_args.cache_dir,
-        attn_implementation="flash_attention_2" if not training_args.disable_flash_attn2 else "eager", 
+        attn_implementation="flash_attention_2" if not training_args.disable_flash_attn2 else "eager",
+        ignore_mismatched_sizes=True,  # Handle text-only vs multimodal architecture differences
         **bnb_model_from_pretrained_args
     )
     
@@ -165,10 +175,27 @@ def train():
                 if "multi_modal_projector" in name:
                     param.requires_grad = True
 
-    processor = AutoProcessor.from_pretrained(model_args.model_id)
+    # Try to load processor, fallback to tokenizer for text-only models
+    try:
+        processor = AutoProcessor.from_pretrained(model_args.model_id)
+        # Test if processor has the expected tokenizer interface
+        if hasattr(processor, 'tokenizer') and hasattr(processor.tokenizer, 'pad_token_id'):
+            rank0_print("Using AutoProcessor (multimodal model)")
+        else:
+            # AutoProcessor exists but doesn't have expected interface, use tokenizer
+            from transformers import AutoTokenizer
+            processor = AutoTokenizer.from_pretrained(model_args.model_id)
+            rank0_print("Using AutoTokenizer (text-only model - processor incompatible)")
+    except:
+        from transformers import AutoTokenizer
+        processor = AutoTokenizer.from_pretrained(model_args.model_id)
+        rank0_print("Using AutoTokenizer (text-only model - no processor)")
         
-    model.config.vision_lr = training_args.vision_lr
-    model.config.projector_lr = training_args.projector_lr
+    # Only set vision config if the model has vision components
+    if hasattr(model.config, 'vision_lr') or hasattr(model, 'vision_tower'):
+        model.config.vision_lr = training_args.vision_lr
+    if hasattr(model.config, 'projector_lr') or hasattr(model, 'multi_modal_projector'):
+        model.config.projector_lr = training_args.projector_lr
 
     if training_args.bits in [4, 8]:
         from peft.tuners.lora import LoraLayer

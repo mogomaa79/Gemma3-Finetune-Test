@@ -105,8 +105,11 @@ class SupervisedDataset(Dataset):
                 user_input = f"{DEFAULT_START_TOKEN}{user_input['role']}\n{user_input['content']}{DEFAULT_END_TOKEN}\n{DEFAULT_START_TOKEN}{gpt_response['role']}\n"
                 gpt_response = f"{gpt_response['content']}{DEFAULT_END_TOKEN}\n"
 
-            prompt_input_ids = processor.tokenizer(user_input, add_special_tokens=False, padding=False, return_tensors='pt')['input_ids']
-            response_input_ids = processor.tokenizer(gpt_response, add_special_tokens=False, padding=False, return_tensors='pt')['input_ids']
+            # Handle both AutoProcessor (multimodal) and AutoTokenizer (text-only)
+            tokenizer = processor.tokenizer if hasattr(processor, 'tokenizer') else processor
+            
+            prompt_input_ids = tokenizer(user_input, add_special_tokens=False, padding=False, return_tensors='pt')['input_ids']
+            response_input_ids = tokenizer(gpt_response, add_special_tokens=False, padding=False, return_tensors='pt')['input_ids']
 
             input_ids = torch.cat([prompt_input_ids, response_input_ids], dim=1).squeeze(0)
             labels = torch.cat(
@@ -188,7 +191,13 @@ def make_supervised_data_module(processor, data_args):
     sft_dataset = SupervisedDataset(
         data_path=data_args.data_path, processor=processor, data_args=data_args
     )
-    data_collator = DataCollatorForSupervisedDataset(pad_token_id=processor.tokenizer.pad_token_id)
+    # Handle both AutoProcessor (multimodal) and AutoTokenizer (text-only)
+    if hasattr(processor, 'tokenizer'):
+        pad_token_id = processor.tokenizer.pad_token_id
+    else:
+        pad_token_id = processor.pad_token_id
+    
+    data_collator = DataCollatorForSupervisedDataset(pad_token_id=pad_token_id)
 
     return dict(train_dataset=sft_dataset,
                 eval_dataset=None,
