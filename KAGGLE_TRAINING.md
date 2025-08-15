@@ -24,13 +24,26 @@ python validate_imports.py
 python test_arguments.py
 ```
 
-### 3. Run Training
-```bash
-# Option 1: Conservative script (minimal arguments)
-bash scripts/finetune_kaggle_conservative.sh
+### 3. Run Training (Multiple Options)
 
-# Option 2: Full-featured script
-bash scripts/finetune_kaggle_fixed.sh
+#### Option 1: Python Direct (Recommended for argument issues)
+```bash
+python train_kaggle_direct.py
+```
+
+#### Option 2: Simple Shell Script (Basic arguments only)
+```bash
+bash scripts/finetune_kaggle_simple.sh
+```
+
+#### Option 3: Minimal Shell Script (Equals format)
+```bash
+bash scripts/finetune_kaggle_minimal.sh
+```
+
+#### Option 4: Conservative Script (If others fail)
+```bash
+bash scripts/finetune_kaggle_conservative.sh
 ```
 
 ### 3. Monitor GPU Usage

@@ -238,6 +238,140 @@ def train():
         safe_save_model_for_hf_trainer(trainer, output_dir=training_args.output_dir)
 
 
+def train_with_args(model_args, data_args, training_args):
+    """Training function that accepts arguments directly (for programmatic use)"""
+    global local_rank
+    
+    if training_args.use_liger:
+        apply_liger_kernel_to_gemma3_text(
+            rope=True, cross_entropy=False, fused_linear_cross_entropy=False, rms_norm=True, geglu=True
+        )
+    
+    replace_gemma3_forward(use_liger=training_args.use_liger)
+
+    if training_args.lora_enable and not training_args.freeze_llm:
+        raise ValueError("If `lora_enable` is True, `freeze_llm` must also be True.")
+    
+    if training_args.vision_lora and not training_args.freeze_vision_tower:
+        raise ValueError("If `vision_lora` is True, `freeze_vision_tower` must also be True.")
+
+    if not training_args.lora_enable:
+        assert not training_args.vision_lora, \
+            "Error: training_args.lora_enable is not enabled, but training_args.vision_lora is enabled."
+
+    if training_args.lora_namespan_exclude is not None:
+        training_args.lora_namespan_exclude = ast.literal_eval(training_args.lora_namespan_exclude)
+    else:
+        training_args.lora_namespan_exclude = ["multi_modal_projector"]
+
+    if not training_args.vision_lora:
+        training_args.lora_namespan_exclude += ["vision_tower", "multi_modal_projector"]
+
+    local_rank = training_args.local_rank
+    compute_dtype = (torch.float16 if training_args.fp16 else (torch.bfloat16 if training_args.bf16 else torch.float32))
+
+    bnb_model_from_pretrained_args = {}
+    if training_args.bits in [4,8]:
+        # Don't use device_map with DeepSpeed ZeRO-3 as they are incompatible
+        if not is_deepspeed_zero3_enabled():
+            bnb_model_from_pretrained_args.update(dict(
+                device_map={"":training_args.device},
+            ))
+        
+        bnb_model_from_pretrained_args.update(dict(
+            quantization_config = BitsAndBytesConfig(
+                load_in_4bit=training_args.bits==4,
+                load_in_8bit=training_args.bits==8,
+                llm_int8_skip_modules=["vision_tower", "multi_modal_projector"],
+                llm_int8_threshold=6.0,
+                llm_int8_has_fp16_weight=False,
+                bnb_4bit_compute_dtype=compute_dtype,
+                bnb_4bit_use_double_quant=training_args.double_quant,
+                bnb_4bit_quant_type=training_args.quant_type,
+            )
+        ))
+    
+    model = Gemma3ForConditionalGeneration.from_pretrained(
+        model_args.model_id,
+        torch_dtype=compute_dtype,
+        cache_dir=training_args.cache_dir,
+        attn_implementation="flash_attention_2" if not training_args.disable_flash_attn2 else "eager",
+        ignore_mismatched_sizes=True,
+        **bnb_model_from_pretrained_args
+    )
+    
+    model_to_configure = model
+    configure_llm(model_to_configure, training_args)
+
+    processor = AutoProcessor.from_pretrained(
+        model_args.model_id,
+        cache_dir=training_args.cache_dir,
+        model_max_length=training_args.max_seq_length,
+        padding_side="right"
+    )
+    
+    processor.tokenizer.padding_side = "right"
+
+    if processor.tokenizer.pad_token_id is None:
+        if processor.tokenizer.unk_token_id is not None:
+            processor.tokenizer.pad_token_id = processor.tokenizer.unk_token_id
+        elif processor.tokenizer.eos_token_id is not None:
+            processor.tokenizer.pad_token_id = processor.tokenizer.eos_token_id
+        else:
+            raise ValueError("No suitable pad token found. Please set manually.")
+    
+    # Set processor pad_token_id
+    processor.pad_token_id = processor.tokenizer.pad_token_id
+
+    data_module = make_supervised_data_module(
+        processor=processor,
+        data_args=data_args,
+        training_args=training_args,
+    )
+    trainer = GemmaSFTTrainer(
+        model=model,
+        tokenizer=processor.tokenizer,
+        args=training_args,
+        **data_module,
+    )
+
+    if training_args.lora_enable:
+        rank0_print("LORA enabled.")
+        lora_namespan_exclude = training_args.lora_namespan_exclude
+        print("LoRA namepan exclude:", lora_namespan_exclude)
+        targets = find_target_linear_names(
+            model,
+            num_lora_modules=training_args.num_lora_modules,
+            lora_namespan_exclude=lora_namespan_exclude,
+        )
+        config = LoraConfig(
+            r=training_args.lora_rank,
+            lora_alpha=training_args.lora_alpha,
+            target_modules=targets,
+            lora_dropout=training_args.lora_dropout,
+            bias=training_args.lora_bias,
+            task_type="CAUSAL_LM",
+            use_dora=training_args.use_dora,
+        )
+        model = get_peft_model(model, config)
+
+    trainer.train()
+
+    if training_args.lora_enable:
+        state_dict = get_peft_state_maybe_zero_3(
+            model.named_parameters(), training_args.lora_bias
+        )
+        non_lora_state_dict = get_peft_state_non_lora_maybe_zero_3(
+            model.named_parameters(), require_grad_only=False
+        )
+
+        if local_rank == 0 or local_rank == -1:
+            model.config.save_pretrained(training_args.output_dir)
+            model.save_pretrained(training_args.output_dir, state_dict=state_dict)
+            torch.save(non_lora_state_dict, os.path.join(training_args.output_dir, "non_lora_state_dict.bin"))
+    else:
+        safe_save_model_for_hf_trainer(trainer, output_dir=training_args.output_dir)
+
 
 if __name__ == "__main__":
     train()
