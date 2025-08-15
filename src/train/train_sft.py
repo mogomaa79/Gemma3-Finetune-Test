@@ -179,10 +179,16 @@ def train():
     # Use tokenizer for text-only models instead of processor
     try:
         processor = AutoProcessor.from_pretrained(model_args.model_id)
-        rank0_print("Using AutoProcessor (multimodal model)")
+        # Test if processor has the expected tokenizer interface
+        if hasattr(processor, 'tokenizer') and hasattr(processor.tokenizer, 'pad_token_id'):
+            rank0_print("Using AutoProcessor (multimodal model)")
+        else:
+            # AutoProcessor exists but doesn't have expected interface, use tokenizer
+            processor = AutoTokenizer.from_pretrained(model_args.model_id)
+            rank0_print("Using AutoTokenizer (text-only model - processor incompatible)")
     except:
         processor = AutoTokenizer.from_pretrained(model_args.model_id)
-        rank0_print("Using AutoTokenizer (text-only model)")
+        rank0_print("Using AutoTokenizer (text-only model - no processor)")
         
     # Only set vision config if model supports it
     if hasattr(model.config, 'vision_lr'):
