@@ -12,8 +12,8 @@ except ImportError:
 from src.trainer import GemmaGRPOTrainer
 from src.dataset import make_grpo_data_module
 from src.params import DataArguments, ModelArguments, GRPOArguments
-from train.train_utils import get_peft_state_maybe_zero_3, get_peft_state_non_lora_maybe_zero_3, safe_save_model_for_hf_trainer
-from monkey_patch_forward import replace_gemma3_forward
+from src.train.train_utils import get_peft_state_maybe_zero_3, get_peft_state_non_lora_maybe_zero_3, safe_save_model_for_hf_trainer
+from src.train.monkey_patch_forward import replace_gemma3_forward
 from src.utils import  load_reward_funcs
 
 local_rank = None

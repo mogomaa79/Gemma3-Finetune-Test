@@ -12,9 +12,9 @@ except ImportError:
 from src.trainer import GemmaSFTTrainer
 from src.dataset import make_supervised_data_module
 from src.params import DataArguments, ModelArguments, TrainingArguments
-from train.train_utils import get_peft_state_maybe_zero_3, get_peft_state_non_lora_maybe_zero_3, safe_save_model_for_hf_trainer
+from src.train.train_utils import get_peft_state_maybe_zero_3, get_peft_state_non_lora_maybe_zero_3, safe_save_model_for_hf_trainer
 import pathlib
-from monkey_patch_forward import replace_gemma3_forward
+from src.train.monkey_patch_forward import replace_gemma3_forward
 from liger_kernel.transformers.monkey_patch import apply_liger_kernel_to_gemma3_text
 
 local_rank = None

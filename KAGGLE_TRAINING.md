@@ -4,17 +4,27 @@
 
 ### 1. Setup Environment
 ```bash
-# Set memory optimization
+# Navigate to project directory
+cd /kaggle/working/Gemma3-Finetune-Test
+
+# Set Python path and memory optimization
+export PYTHONPATH="/kaggle/working/Gemma3-Finetune-Test:$PYTHONPATH"
 export PYTORCH_CUDA_ALLOC_CONF=expandable_segments:True
 
 # Install required packages (if needed)
 pip install transformers datasets peft deepspeed accelerate bitsandbytes
 ```
 
-### 2. Run Training
+### 2. Validate Setup
 ```bash
-# Use the Kaggle-optimized script
-bash scripts/finetune_kaggle.sh
+# Check if imports work correctly
+python validate_imports.py
+```
+
+### 3. Run Training
+```bash
+# Use the fixed Kaggle script
+bash scripts/finetune_kaggle_fixed.sh
 ```
 
 ### 3. Monitor GPU Usage
