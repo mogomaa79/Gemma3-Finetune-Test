@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MODEL_NAME="google/gemma-3-4b-it"
+MODEL_NAME="google/gemma-3-270m"
 
 export PYTHONPATH=src:$PYTHONPATH
 
@@ -10,8 +10,8 @@ deepspeed src/train/train_sft.py \
     --use_liger True \
     --deepspeed scripts/zero3.json \
     --model_id $MODEL_NAME \
-    --data_path /path/to/your/training/data.json \
-    --image_folder /path/to/your/image/folder \
+    --data_path data.json \
+    --image_folder ./ \
     --disable_flash_attn2 True \
     --lora_enable False \
     --freeze_projector False \
