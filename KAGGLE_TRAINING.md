@@ -19,11 +19,17 @@ pip install transformers datasets peft deepspeed accelerate bitsandbytes
 ```bash
 # Check if imports work correctly
 python validate_imports.py
+
+# Test argument parsing (optional)
+python test_arguments.py
 ```
 
 ### 3. Run Training
 ```bash
-# Use the fixed Kaggle script
+# Option 1: Conservative script (minimal arguments)
+bash scripts/finetune_kaggle_conservative.sh
+
+# Option 2: Full-featured script
 bash scripts/finetune_kaggle_fixed.sh
 ```
 
