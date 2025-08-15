@@ -147,6 +147,13 @@ def train():
                 model.to(torch.float16)
 
     processor = AutoProcessor.from_pretrained(model_args.model_id)
+    
+    # Configure processor with pad_token_id and eos_token_id
+    if hasattr(processor, 'tokenizer'):
+        if hasattr(processor.tokenizer, 'pad_token_id'):
+            processor.pad_token_id = processor.tokenizer.pad_token_id
+        if hasattr(processor.tokenizer, 'eos_token_id'):
+            processor.eos_token_id = processor.tokenizer.eos_token_id
 
     if training_args.bits in [4, 8]:
         from peft.tuners.lora import LoraLayer

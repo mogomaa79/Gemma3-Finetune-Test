@@ -167,6 +167,13 @@ def train():
                     param.requires_grad = True
 
     processor = AutoProcessor.from_pretrained(model_args.model_id)
+    
+    # Configure processor with pad_token_id and eos_token_id
+    if hasattr(processor, 'tokenizer'):
+        if hasattr(processor.tokenizer, 'pad_token_id'):
+            processor.pad_token_id = processor.tokenizer.pad_token_id
+        if hasattr(processor.tokenizer, 'eos_token_id'):
+            processor.eos_token_id = processor.tokenizer.eos_token_id
         
     model.config.vision_lr = training_args.vision_lr
     model.config.projector_lr = training_args.projector_lr

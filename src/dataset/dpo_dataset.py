@@ -184,7 +184,7 @@ def make_dpo_data_module(processor, data_args):
     """Make dataset and collator for DPO fine-tuning."""
     dpo_dataset = DPODataset(
         data_path=data_args.data_path, processor=processor, data_args=data_args)
-    data_collator = DataCollatorForDPODataset(pad_token_id=processor.tokenizer.pad_token_id)
+    data_collator = DataCollatorForDPODataset(pad_token_id=processor.pad_token_id)
 
     return dict(train_dataset=dpo_dataset,
                 eval_dataset=None,
